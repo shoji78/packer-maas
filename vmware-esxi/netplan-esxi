@@ -53,6 +53,16 @@ def wipe():
     """Wipe the existing network config from the running system."""
     print('Wiping current network configuration...')
 
+    def parse_dns_list(output):
+        output = output.decode().split(':', 2)[1]
+        entries = []
+        for word in output.split(','):
+            word = word.strip()
+            if not word:
+                continue
+            entries.append(word)
+        return entries
+
     for vmk in get_list_names(['ip', 'interface']):
         check_call([
             'esxcli', 'network', 'ip', 'interface', 'remove', '-i', vmk])
@@ -62,13 +72,13 @@ def wipe():
             'esxcli', 'network', 'vswitch', 'standard', 'remove',
             '-v', vswitch])
 
-    check_call(['esxcli', 'network', 'ip', 'dns', 'server', 'remove', '--all'])
+    output = check_output(['esxcli', 'network', 'ip', 'dns', 'server', 'list'])
+    for dnsserver in parse_dns_list(output):
+        check_call([
+            'esxcli', 'network', 'ip', 'dns', 'server', 'remove',
+            '-s', dnsserver])
     output = check_output(['esxcli', 'network', 'ip', 'dns', 'search', 'list'])
-    output = output.decode().split(':', 2)[1]
-    for search in output.split(','):
-        search = search.strip()
-        if not search:
-            continue
+    for search in parse_dns_list(output):
         check_call([
             'esxcli', 'network', 'ip', 'dns', 'search', 'remove',
             '-d', search])
