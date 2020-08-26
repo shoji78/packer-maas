@@ -68,8 +68,8 @@ def parse_config(config):
             if 'grub_device' in i:
                 i['partitioned'] = True
                 grub_device = i['id']
-            model = i['model'].replace(' ', '_')
-            serial = i['serial'].replace(' ', '_')
+            model = i['model'].replace(' ', '_') if i.get('model') else ''
+            serial = i['serial'].replace(' ', '_') if i.get('serial') else ''
             for device in devices:
                 # Search for both the model and serial
                 m = re.search('.*%s.*%s.*' % (model, serial), device[0])
